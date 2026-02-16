@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Feedback App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>MAIN QUESTION: What is your favorite color?</h1>
+        
+        <div id="submission-form">
+            <textarea id="answer-input" placeholder="Enter your answer here..." rows="3"></textarea>
+            <button id="submit-btn">Submit Answer</button>
+            <p id="submit-message" style="display: none;"></p>
+        </div>
+        
+        <div id="stats">
+            <p>Total Answers: <span id="total-count">0</span></p>
+        </div>
+        
+        <div id="answers-list">
+            <!-- Answers will be loaded here -->
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
