@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#submission-form {
+    margin-bottom: 20px;
+}
+
+#answer-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+#submit-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#submit-btn:hover {
+    background-color: #45a049;
+}
+
+#submit-message {
+    color: red;
+    margin-top: 10px;
+}
+
+#stats {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.answer-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.answer-text {
+    margin-bottom: 10px;
+}
+
+.like-dislike {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+button.like-btn, button.dislike-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.like-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.dislike-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.like-btn:hover {
+    background-color: #45a049;
+}
+
+.dislike-btn:hover {
+    background-color: #da190b;
+}
+
+/* Mobile-friendly */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+    .like-dislike {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
