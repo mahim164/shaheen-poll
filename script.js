@@ -13,104 +13,146 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// DOM elements
+// DOM
 const answerInput = document.getElementById('answer-input');
 const submitBtn = document.getElementById('submit-btn');
 const submitMessage = document.getElementById('submit-message');
 const totalCount = document.getElementById('total-count');
 const answersList = document.getElementById('answers-list');
 
-// Check if user has already submitted (localStorage)
+
+// prevent multiple submissions
 if (localStorage.getItem('hasSubmitted')) {
-    if(document.getElementById('submission-form')) {
-        document.getElementById('submission-form').style.display = 'none';
-    }
-    submitMessage.textContent = 'You have already submitted an answer.';
+    const form = document.getElementById('submission-form');
+    if(form) form.style.display = 'none';
+    submitMessage.textContent = 'You already submitted.';
     submitMessage.style.display = 'block';
 }
 
-// Submit answer
+
+// SUBMIT ANSWER
 submitBtn.addEventListener('click', async () => {
+
     const answer = answerInput.value.trim();
     if (!answer) {
-        submitMessage.textContent = 'Please enter an answer.';
+        submitMessage.textContent = 'Write something first!';
         submitMessage.style.display = 'block';
         return;
     }
 
     try {
+
         const counterRef = db.collection('counters').doc('serial');
-        
-        await db.runTransaction(async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
-            const nextSerial = (counterDoc.exists ? counterDoc.data().next : 1);
-            
-            // Update counter
-            transaction.set(counterRef, { next: nextSerial + 1 });
-            
-            // Add answer
-            const newAnswerRef = db.collection('answers').doc();
-            transaction.set(newAnswerRef, {
-                serial: `Customer${nextSerial}`,
+
+        await db.runTransaction(async (t)=>{
+
+            const counterDoc = await t.get(counterRef);
+            const nextSerial = counterDoc.exists ? counterDoc.data().next : 1;
+
+            // update counter
+            t.set(counterRef,{ next: nextSerial+1 });
+
+            // save answer
+            const newRef = db.collection('answers').doc();
+
+            t.set(newRef,{
+                serialNumber: nextSerial,             // NUMBER
+                name: `Customer${nextSerial}`,        // DISPLAY NAME
                 text: answer,
-                likes: 0,
-                dislikes: 0,
+                likes:0,
+                dislikes:0,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
+
         });
 
-        // Mark as submitted
-        localStorage.setItem('hasSubmitted', 'true');
-        if(document.getElementById('submission-form')) {
-            document.getElementById('submission-form').style.display = 'none';
-        }
-        submitMessage.textContent = 'Answer submitted successfully!';
-        submitMessage.style.color = 'green';
-        submitMessage.style.display = 'block';
-    } catch (error) {
-        console.error('Error submitting answer:', error);
-        submitMessage.textContent = 'Error submitting answer. Try again.';
-        submitMessage.style.display = 'block';
+        localStorage.setItem('hasSubmitted','true');
+
+        const form = document.getElementById('submission-form');
+        if(form) form.style.display='none';
+
+        submitMessage.textContent='Submitted!';
+        submitMessage.style.color='green';
+        submitMessage.style.display='block';
+
+    }catch(err){
+        console.error(err);
+        submitMessage.textContent='Error!';
+        submitMessage.style.display='block';
     }
+
 });
 
-// Load and display answers in real-time
-db.collection('answers').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
-    answersList.innerHTML = '';
-    let count = 0;
-    snapshot.forEach((doc) => {
+
+// REALTIME LOAD
+db.collection('answers')
+.orderBy('serialNumber','asc')   // FIXED ORDER
+.onSnapshot((snap)=>{
+
+    answersList.innerHTML='';
+    let count=0;
+
+    snap.forEach(doc=>{
+
         count++;
-        const data = doc.data();
-        const answerDiv = document.createElement('div');
-        answerDiv.className = 'answer-item';
-        answerDiv.innerHTML = `
-            <div class="answer-text"><strong>${data.serial || 'User'}:</strong> ${data.text}</div>
-            <div class="like-dislike">
-                <button class="like-btn" data-id="${doc.id}">👍 ${data.likes || 0}</button>
-                <button class="dislike-btn" data-id="${doc.id}">👎 ${data.dislikes || 0}</button>
-            </div>
+
+        const d = doc.data();
+
+        const div=document.createElement('div');
+        div.className='answer-item';
+
+        div.innerHTML=`
+        <div class="answer-text">
+        <strong>${d.name}:</strong> ${d.text}
+        </div>
+
+        <div class="like-dislike">
+        <button class="like-btn" data-id="${doc.id}">👍 ${d.likes||0}</button>
+        <button class="dislike-btn" data-id="${doc.id}">👎 ${d.dislikes||0}</button>
+        </div>
         `;
-        answersList.appendChild(answerDiv);
+
+        answersList.appendChild(div);
+
     });
-    totalCount.textContent = count;
+
+    totalCount.textContent=count;
+
 });
 
-// Handle like/dislike clicks
-answersList.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('like-btn') || e.target.classList.contains('dislike-btn')) {
-        const docId = e.target.dataset.id;
-        const isLike = e.target.classList.contains('like-btn');
-        const field = isLike ? 'likes' : 'dislikes';
-        
-        try {
-            const docRef = db.collection('answers').doc(docId);
-            await db.runTransaction(async (transaction) => {
-                const doc = await transaction.get(docRef);
-                const current = doc.data()[field] || 0;
-                transaction.update(docRef, { [field]: current + 1 });
-            });
-        } catch (error) {
-            console.error('Error updating like/dislike:', error);
-        }
+
+// ONE VOTE ONLY
+answersList.addEventListener('click', async (e)=>{
+
+    if(!e.target.classList.contains('like-btn') &&
+       !e.target.classList.contains('dislike-btn')) return;
+
+    const id=e.target.dataset.id;
+
+    // already voted?
+    if(localStorage.getItem("vote_"+id)){
+        alert("Already voted!");
+        return;
     }
+
+    const field=e.target.classList.contains('like-btn')?'likes':'dislikes';
+
+    try{
+
+        const ref=db.collection('answers').doc(id);
+
+        await db.runTransaction(async(t)=>{
+
+            const doc=await t.get(ref);
+            const val=doc.data()[field]||0;
+            t.update(ref,{[field]:val+1});
+
+        });
+
+        localStorage.setItem("vote_"+id,field);
+
+    }catch(err){
+        console.error(err);
+    }
+
 });
